@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>VT School Journal</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: '#3b82f6',
+            win: '#10b981',
+            loss: '#ef4444',
+            surface: '#1e293b',
+            background: '#0f172a'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-background text-slate-100 min-h-screen flex flex-col antialiased pb-20">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-30 bg-surface/80 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span class="text-xl">📊</span>
+      <div>
+        <h1 class="font-bold text-base tracking-wide leading-none">VT School</h1>
+        <p class="text-xs text-slate-400 font-medium">Trading Journal</p>
+      </div>
+    </div>
+    <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 shadow-lg shadow-blue-600/30 transition">
+      <i data-lucide="plus" class="w-4 h-4"></i> เปิดเทรด
+    </button>
+  </header>
+
+  <!-- Main Views Container -->
+  <main class="flex-1 max-w-lg w-full mx-auto p-4 space-y-4">
+    
+    <!-- VIEW 1: หน้าหลัก (Dashboard) -->
+    <div id="view-dashboard" class="space-y-4">
+      <!-- สรุปสัปดาห์นี้ Card -->
+      <div class="bg-surface rounded-2xl p-4 border border-slate-800 shadow-sm relative overflow-hidden">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <p class="text-xs font-medium text-slate-400">สรุปสัปดาห์นี้</p>
+            <h2 id="week-date-range" class="text-sm font-semibold text-slate-200 mt-0.5">-</h2>
+          </div>
+          <span id="week-trades-count" class="text-xs px-2.5 py-1 bg-slate-800 rounded-full text-slate-300">0 เทรด</span>
+        </div>
+        <div class="flex items-baseline justify-between mt-3">
+          <div class="text-3xl font-extrabold tracking-tight" id="week-net-r">+0.00R</div>
+          <div class="text-xs text-slate-400" id="week-win-rate">Win rate 0.0%</div>
+        </div>
+      </div>
+
+      <!-- Total & Current R Cards -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-surface rounded-xl p-3.5 border border-slate-800">
+          <p class="text-xs text-slate-400">R ทั้งหมด</p>
+          <p id="total-r" class="text-xl font-bold mt-1 text-slate-100">+0.00R</p>
+        </div>
+        <div class="bg-surface rounded-xl p-3.5 border border-slate-800">
+          <p class="text-xs text-slate-400">จำนวน R ปัจจุบัน</p>
+          <div class="flex items-baseline gap-1 mt-1">
+            <p id="current-r-balance" class="text-xl font-bold text-slate-100">100.00R</p>
+            <span id="current-r-gain" class="text-xs font-semibold text-slate-400">(+0.00R)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ภาพรวมสถิติ Table -->
+      <div class="bg-surface rounded-2xl p-4 border border-slate-800">
+        <h3 class="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
+          <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-400"></i> ภาพรวม
+        </h3>
+        <div class="divide-y divide-slate-800 text-sm">
+          <div class="py-2.5 flex justify-between items-center">
+            <span class="text-slate-400">Win rate</span>
+            <span id="stat-winrate" class="font-bold text-slate-100">0.0%</span>
+          </div>
+          <div class="py-2.5 flex justify-between items-center">
+            <span class="text-slate-400">เฉลี่ยชนะ</span>
+            <span id="stat-avg-win" class="font-bold text-win">+0.00R</span>
+          </div>
+          <div class="py-2.5 flex justify-between items-center">
+            <span class="text-slate-400">เฉลี่ยแพ้</span>
+            <span id="stat-avg-loss" class="font-bold text-loss">-0.00R</span>
+          </div>
+          <div class="py-2.5 flex justify-between items-center">
+            <span class="text-slate-400">Profit factor</span>
+            <span id="stat-pf" class="font-bold text-slate-100">0.00x</span>
+          </div>
+          <div class="py-2.5 flex justify-between items-center">
+            <span class="text-slate-400">จำนวนเทรด</span>
+            <span id="stat-total-trades" class="font-bold text-slate-100">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 2: Journal (รายการเทรด) -->
+    <div id="view-journal" class="space-y-3 hidden">
+      <div class="flex items-center justify-between">
+        <h2 class="text-base font-bold">บันทึกการเทรด</h2>
+        <span id="journal-count" class="text-xs text-slate-400">0 รายการ</span>
+      </div>
+      <div id="trades-list" class="space-y-3">
+        <!-- Rendered trade cards -->
+      </div>
+    </div>
+
+    <!-- VIEW 3: ปฏิทิน (Calendar) -->
+    <div id="view-calendar" class="space-y-4 hidden">
+      <div class="bg-surface rounded-2xl p-4 border border-slate-800">
+        <div class="flex items-center justify-between mb-4">
+          <h2 id="calendar-month-year" class="text-base font-bold text-slate-100">ตุลาคม 2026</h2>
+          <div class="flex gap-1">
+            <button onclick="changeMonth(-1)" class="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+            <button onclick="changeMonth(1)" class="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+        <div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-400 mb-2">
+          <span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span>
+        </div>
+        <div id="calendar-grid" class="grid grid-cols-7 gap-1 text-xs">
+          <!-- Calendar days -->
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 4: ตั้งค่า (Settings) -->
+    <div id="view-settings" class="space-y-4 hidden">
+      <div class="bg-surface rounded-2xl p-4 border border-slate-800 space-y-4">
+        <h2 class="text-base font-bold">ตั้งค่าพอร์ต & ข้อมูล</h2>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">R เริ่มต้นพอร์ต (Base Initial R)</label>
+          <input type="number" id="setting-initial-r" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100" value="100">
+        </div>
+        <button onclick="saveSettings()" class="w-full bg-blue-600 hover:bg-blue-500 py-2 rounded-lg text-sm font-semibold">บันทึกการตั้งค่า</button>
+      </div>
+
+      <div class="bg-surface rounded-2xl p-4 border border-slate-800 space-y-3">
+        <h3 class="text-sm font-semibold">สำรองและกู้คืนข้อมูล</h3>
+        <div class="flex gap-2">
+          <button onclick="exportData()" class="flex-1 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5">
+            <i data-lucide="download" class="w-4 h-4"></i> Export JSON
+          </button>
+          <label class="flex-1 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 cursor-pointer">
+            <i data-lucide="upload" class="w-4 h-4"></i> Import JSON
+            <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(event)">
+          </label>
+        </div>
+        <button onclick="clearAllData()" class="w-full text-xs text-red-400 hover:text-red-300 py-2 border border-red-500/20 rounded-lg">ล้างข้อมูลทั้งหมด</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation Bar -->
+  <nav class="fixed bottom-0 left-0 right-0 z-30 bg-surface/90 backdrop-blur-lg border-t border-slate-800 max-w-lg mx-auto flex justify-around py-2">
+    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center gap-1 text-blue-500 text-xs font-medium">
+      <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+      <span>หน้าหลัก</span>
+    </button>
+    <button onclick="switchTab('journal')" id="nav-journal" class="flex flex-col items-center gap-1 text-slate-400 text-xs font-medium">
+      <i data-lucide="book-open" class="w-5 h-5"></i>
+      <span>Journal</span>
+    </button>
+    <button onclick="switchTab('calendar')" id="nav-calendar" class="flex flex-col items-center gap-1 text-slate-400 text-xs font-medium">
+      <i data-lucide="calendar" class="w-5 h-5"></i>
+      <span>ปฏิทิน</span>
+    </button>
+    <button onclick="switchTab('settings')" id="nav-settings" class="flex flex-col items-center gap-1 text-slate-400 text-xs font-medium">
+      <i data-lucide="settings" class="w-5 h-5"></i>
+      <span>ตั้งค่า</span>
+    </button>
+  </nav>
+
+  <!-- Trade Entry Modal -->
+  <div id="trade-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+    <div class="bg-surface w-full max-w-lg rounded-t-2xl sm:rounded-2xl border border-slate-800 p-5 max-h-[90vh] overflow-y-auto space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 class="text-base font-bold text-slate-100" id="modal-title">บันทึกการเทรดใหม่</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <form id="trade-form" onsubmit="handleTradeSubmit(event)" class="space-y-3">
+        <input type="hidden" id="trade-id">
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">วันที่</label>
+            <input type="date" id="trade-date" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">คู่เงิน / สินทรัพย์</label>
+            <input type="text" id="trade-pair" placeholder="เช่น XAUUSD, EURUSD" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm uppercase text-slate-100">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">ทิศทาง (Direction)</label>
+            <select id="trade-dir" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100">
+              <option value="BUY">BUY</option>
+              <option value="SELL">SELL</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">ผลลัพธ์ R (เช่น +2.13, -0.25)</label>
+            <input type="number" step="0.01" id="trade-r" placeholder="0.00" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 font-bold">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">กลยุทธ์ / หน้าเทรด (Setup)</label>
+          <input type="text" id="trade-setup" placeholder="เช่น Balance Action, Retest + Pinbar" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">ราคาเข้า (Entry)</label>
+            <input type="number" step="any" id="trade-entry" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">ราคาตัดขาดทุน (SL)</label>
+            <input type="number" step="any" id="trade-sl" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">TradingView Chart Link (ถ้ามี)</label>
+          <input type="url" id="trade-chart" placeholder="https://www.tradingview.com/x/..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">บันทึกสรุป / ข้อคิด (Notes)</label>
+          <textarea id="trade-notes" rows="2" placeholder="เหตุผลการเข้า/ออก อารมณ์ หรือสิ่งที่ต้องปรับปรุง..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100"></textarea>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeModal()" class="flex-1 py-2.5 rounded-lg bg-slate-800 text-slate-300 text-sm font-semibold">ยกเลิก</button>
+          <button type="submit" class="flex-1 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold">บันทึกเทรด</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Application Logic -->
+  <script>
+    // State management
+    let trades = JSON.parse(localStorage.getItem('vt_trades') || '[]');
+    let initialR = parseFloat(localStorage.getItem('vt_initial_r') || '100');
+    let currentCalDate = new Date();
+
+    // Init sample data if empty to match user's VT School prototype
+    if (trades.length === 0) {
+      trades = [
+        { id: '1', date: '2026-10-05', pair: 'XAUUSD', dir: 'BUY', r: -0.25, setup: 'Balance Action Retest', entry: 2650.5, sl: 2645.0, chart: '', notes: 'ออกก่อนตามแผน -0.25R' },
+        { id: '2', date: '2026-10-02', pair: 'EURUSD', dir: 'SELL', r: 0.85, setup: 'VTT Breakdown', entry: 1.0920, sl: 1.0940, chart: '', notes: 'TP ตามโซน' },
+        { id: '3', date: '2026-10-01', pair: 'GBPUSD', dir: 'BUY', r: 0.60, setup: 'Supply to Demand', entry: 1.3050, sl: 1.3020, chart: '', notes: 'ปิดทำกำไรช่วง NY' },
+        { id: '4', date: '2026-09-30', pair: 'XAUUSD', dir: 'BUY', r: 0.45, setup: 'Pinbar PA', entry: 2635.0, sl: 2630.0, chart: '', notes: 'ตามแผน' },
+        { id: '5', date: '2026-09-29', pair: 'USDJPY', dir: 'SELL', r: 0.48, setup: 'Balance Action', entry: 144.50, sl: 145.00, chart: '', notes: 'รันเทรนด์' }
+      ];
+      localStorage.setItem('vt_trades', JSON.stringify(trades));
+    }
+
+    // App Initialization
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      document.getElementById('setting-initial-r').value = initialR;
+      document.getElementById('trade-date').value = new Date().toISOString().split('T')[0];
+      renderAll();
+      registerSW();
+    });
+
+    function registerSW() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      }
+    }
+
+    function switchTab(tab) {
+      ['dashboard', 'journal', 'calendar', 'settings'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.toggle('hidden', t !== tab);
+        const navBtn = document.getElementById(`nav-${t}`);
+        if (t === tab) {
+          navBtn.classList.add('text-blue-500');
+          navBtn.classList.remove('text-slate-400');
+        } else {
+          navBtn.classList.remove('text-blue-500');
+          navBtn.classList.add('text-slate-400');
+        }
+      });
+      if (tab === 'calendar') renderCalendar();
+    }
+
+    function renderAll() {
+      renderDashboard();
+      renderJournal();
+      renderCalendar();
+      lucide.createIcons();
+    }
+
+    function renderDashboard() {
+      const totalTrades = trades.length;
+      const wins = trades.filter(t => t.r > 0);
+      const losses = trades.filter(t => t.r < 0);
+
+      const winRate = totalTrades > 0 ? (wins.length / totalTrades) * 100 : 0;
+      const totalR = trades.reduce((acc, t) => acc + t.r, 0);
+
+      const sumWinR = wins.reduce((acc, t) => acc + t.r, 0);
+      const sumLossR = Math.abs(losses.reduce((acc, t) => acc + t.r, 0));
+
+      const avgWin = wins.length > 0 ? sumWinR / wins.length : 0;
+      const avgLoss = losses.length > 0 ? -(sumLossR / losses.length) : 0;
+      const pf = sumLossR > 0 ? (sumWinR / sumLossR) : (sumWinR > 0 ? 99.9 : 0);
+
+      const currentBalance = initialR + totalR;
+
+      // Stats DOM
+      document.getElementById('total-r').innerText = formatR(totalR);
+      document.getElementById('total-r').className = `text-xl font-bold mt-1 ${totalR >= 0 ? 'text-win' : 'text-loss'}`;
+      document.getElementById('current-r-balance').innerText = `${currentBalance.toFixed(2)}R`;
+      document.getElementById('current-r-gain').innerText = `(${formatR(totalR)})`;
+      document.getElementById('stat-winrate').innerText = `${winRate.toFixed(1)}%`;
+      document.getElementById('stat-avg-win').innerText = formatR(avgWin);
+      document.getElementById('stat-avg-loss').innerText = formatR(avgLoss);
+      document.getElementById('stat-pf').innerText = `${pf.toFixed(2)}x`;
+      document.getElementById('stat-total-trades').innerText = totalTrades;
+
+      // สรุปสัปดาห์นี้ (Mon-Sun of current week)
+      calculateWeekSummary();
+    }
+
+    function calculateWeekSummary() {
+      const now = new Date();
+      const currentDay = now.getDay() || 7; // Monday is 1
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - currentDay + 1);
+      const friday = new Date(monday);
+      friday.setDate(monday.getDate() + 4);
+
+      const mondayStr = monday.toISOString().split('T')[0];
+      const sundayStr = new Date(monday.getTime() + 6 * 86400000).toISOString().split('T')[0];
+
+      const weekTrades = trades.filter(t => t.date >= mondayStr && t.date <= sundayStr);
+      const weekR = weekTrades.reduce((acc, t) => acc + t.r, 0);
+      const weekWins = weekTrades.filter(t => t.r > 0).length;
+      const weekWR = weekTrades.length > 0 ? (weekWins / weekTrades.length) * 100 : 0;
+
+      const opts = { day: 'numeric', month: 'short' };
+      document.getElementById('week-date-range').innerText = 
+        `${monday.toLocaleDateString('en-GB', opts)} – ${friday.toLocaleDateString('en-GB', { ...opts, year: 'numeric' })}`;
+      document.getElementById('week-trades-count').innerText = `${weekTrades.length} เทรด`;
+      document.getElementById('week-net-r').innerText = formatR(weekR);
+      document.getElementById('week-net-r').className = `text-3xl font-extrabold tracking-tight ${weekR >= 0 ? 'text-win' : 'text-loss'}`;
+      document.getElementById('week-win-rate').innerText = `Win rate ${weekWR.toFixed(1)}%`;
+    }
+
+    function renderJournal() {
+      const container = document.getElementById('trades-list');
+      document.getElementById('journal-count').innerText = `${trades.length} รายการ`;
+
+      if (trades.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-slate-500 text-sm">ยังไม่มีบันทึกการเทรด กดปุ่ม "+ เปิดเทรด" ด้านบนเพื่อเริ่มบันทึก</div>`;
+        return;
+      }
+
+      container.innerHTML = trades.slice().sort((a,b) => new Date(b.date) - new Date(a.date)).map(t => {
+        const isWin = t.r > 0;
+        const isLoss = t.r < 0;
+        const badgeColor = isWin ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
+                           isLoss ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 
+                           'bg-slate-800 text-slate-300 border-slate-700';
+
+        return `
+          <div class="bg-surface rounded-xl p-3.5 border border-slate-800 space-y-2">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-sm text-slate-100">${t.pair}</span>
+                <span class="text-xs px-1.5 py-0.5 rounded font-semibold ${t.dir === 'BUY' ? 'bg-blue-500/20 text-blue-400' : 'bg-orange-500/20 text-orange-400'}">${t.dir}</span>
+                <span class="text-xs text-slate-400">${t.date}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-extrabold px-2 py-0.5 rounded border ${badgeColor}">${formatR(t.r)}</span>
+                <button onclick="deleteTrade('${t.id}')" class="text-slate-500 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+              </div>
+            </div>
+            ${t.setup ? `<div class="text-xs text-slate-300"><span class="text-slate-500 font-medium">Setup:</span> ${t.setup}</div>` : ''}
+            ${t.notes ? `<div class="text-xs text-slate-400 italic">${t.notes}</div>` : ''}
+            ${t.chart ? `<a href="${t.chart}" target="_blank" class="inline-flex items-center gap-1 text-xs text-blue-400 hover:underline"><i data-lucide="external-link" class="w-3.5 h-3.5"></i> ดูกราฟ TradingView</a>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderCalendar() {
+      const year = currentCalDate.getFullYear();
+      const month = currentCalDate.getMonth();
+      const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+      document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year + 543}`;
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+
+      // Blank days before start of month
+      for (let i = 0; i < firstDay; i++) {
+        grid.innerHTML += `<div class="h-14 rounded-lg bg-slate-900/40"></div>`;
+      }
+
+      // Populate days
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayTrades = trades.filter(t => t.date === dateStr);
+        const dayR = dayTrades.reduce((acc, t) => acc + t.r, 0);
+
+        let bgClass = "bg-slate-900/80 text-slate-400 border border-slate-800/60";
+        if (dayTrades.length > 0) {
+          bgClass = dayR > 0 ? "bg-emerald-950/60 border border-emerald-800 text-emerald-300" :
+                    dayR < 0 ? "bg-rose-950/60 border border-rose-800 text-rose-300" :
+                    "bg-slate-800 border border-slate-700 text-slate-300";
+        }
+
+        grid.innerHTML += `
+          <div class="h-14 p-1 rounded-lg flex flex-col justify-between ${bgClass}">
+            <span class="text-[10px] font-semibold">${day}</span>
+            ${dayTrades.length > 0 ? `<span class="text-[11px] font-bold self-center">${formatR(dayR)}</span>` : ''}
+          </div>
+        `;
+      }
+      lucide.createIcons();
+    }
+
+    function changeMonth(delta) {
+      currentCalDate.setMonth(currentCalDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    function formatR(val) {
+      if (val > 0) return `+${val.toFixed(2)}R`;
+      return `${val.toFixed(2)}R`;
+    }
+
+    // Modal & Form Handlers
+    function openModal() {
+      document.getElementById('trade-form').reset();
+      document.getElementById('trade-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('trade-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('trade-modal').classList.add('hidden');
+    }
+
+    function handleTradeSubmit(e) {
+      e.preventDefault();
+      const newTrade = {
+        id: Date.now().toString(),
+        date: document.getElementById('trade-date').value,
+        pair: document.getElementById('trade-pair').value.toUpperCase(),
+        dir: document.getElementById('trade-dir').value,
+        r: parseFloat(document.getElementById('trade-r').value) || 0,
+        setup: document.getElementById('trade-setup').value,
+        entry: parseFloat(document.getElementById('trade-entry').value) || null,
+        sl: parseFloat(document.getElementById('trade-sl').value) || null,
+        chart: document.getElementById('trade-chart').value,
+        notes: document.getElementById('trade-notes').value
+      };
+
+      trades.unshift(newTrade);
+      localStorage.setItem('vt_trades', JSON.stringify(trades));
+      closeModal();
+      renderAll();
+    }
+
+    function deleteTrade(id) {
+      if (confirm('ต้องการลบประวัติการเทรดนี้หรือไม่?')) {
+        trades = trades.filter(t => t.id !== id);
+        localStorage.setItem('vt_trades', JSON.stringify(trades));
+        renderAll();
+      }
+    }
+
+    function saveSettings() {
+      initialR = parseFloat(document.getElementById('setting-initial-r').value) || 100;
+      localStorage.setItem('vt_initial_r', initialR.toString());
+      renderAll();
+      alert('บันทึกการตั้งค่าเรียบร้อยแล้ว');
+    }
+
+    function exportData() {
+      const data = { initialR, trades };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `vt_journal_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+    }
+
+    function importData(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const imported = JSON.parse(event.target.result);
+          if (Array.isArray(imported.trades)) {
+            trades = imported.trades;
+            initialR = imported.initialR || 100;
+            localStorage.setItem('vt_trades', JSON.stringify(trades));
+            localStorage.setItem('vt_initial_r', initialR.toString());
+            renderAll();
+            alert('นำเข้าข้อมูลสำเร็จ');
+          }
+        } catch (err) {
+          alert('รูปแบบไฟล์ไม่ถูกต้อง');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function clearAllData() {
+      if (confirm('คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลเทรดทั้งหมด?')) {
+        trades = [];
+        localStorage.setItem('vt_trades', JSON.stringify(trades));
+        renderAll();
+      }
+    }
+  </script>
+</body>
+</html>
